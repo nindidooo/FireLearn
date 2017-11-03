@@ -1,2 +1,2 @@
 # FireLearn
-![Alt text](app.png?raw=true "PMT")
+![PMT](appdemo.png?raw=true "PMT")
