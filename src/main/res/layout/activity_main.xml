@@ -25,14 +25,12 @@
 
         <TextView
             android:id="@+id/RecordLabel"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="38dp"
-            android:text="@string/tap_and_hold_button_to_record"
+            android:text="Tap and hold button to record"
             android:textAlignment="center"
             android:textSize="26dp"
-
-            tools:layout_editor_absoluteX="14dp"
-            tools:layout_editor_absoluteY="190dp" />
+            />
 
     </LinearLayout>
 

@@ -3,16 +3,19 @@ package com.example.android.firelearn;
 import android.app.ProgressDialog;
 import android.media.MediaRecorder;
 import android.net.Uri;
-import android.os.Environment;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.os.Environment;
+import android.support.annotation.NonNull;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -31,6 +34,9 @@ public class MainActivity extends AppCompatActivity {
     private StorageReference mStorage;
     private ProgressDialog mProgress;
 
+    // Create a storage reference from our app
+    private StorageReference storageRef;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,11 +45,13 @@ public class MainActivity extends AppCompatActivity {
         mRecordLabel = (TextView) findViewById(R.id.RecordLabel);
         mProgress = new ProgressDialog(this);
 
+        // upload
         mStorage = FirebaseStorage.getInstance().getReference();
+        // download
         // Set location here
         mFileName = Environment.getExternalStorageDirectory().getAbsolutePath();
         // Set file type here and THREE_GPP below
-        mFileName += "/recorded_audio.3gp"; // that's the format we'll use, can be changed
+        mFileName += "/myrecording.mp3"; // that's the format we'll use, can be changed
 
         mRecordBtn.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -65,9 +73,10 @@ public class MainActivity extends AppCompatActivity {
     private void startRecording() {
         mRecorder = new MediaRecorder();
         mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP); // change this for file
+        mRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4); // change this for file
         mRecorder.setOutputFile(mFileName);
-        mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+        mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+
 
         try {
             mRecorder.prepare();
@@ -83,13 +92,15 @@ public class MainActivity extends AppCompatActivity {
         mRecorder.release();
         mRecorder = null;
         uploadAudio();
+        downloadMidi();
     }
 
     private void uploadAudio() {
 
         mProgress.setMessage("Uploading Audio ...");
         mProgress.show();
-        StorageReference filepath = mStorage.child("Audio").child("new_audio.3gp");
+        StorageReference filepath = mStorage.child("new_audio.aac");
+//        StorageReference filepath = mStorage.child("Audio").child("new_audio.aac");
         // create a uri file form filename string
         Uri uri = Uri.fromFile(new File(mFileName));
 
@@ -102,6 +113,45 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    private void downloadMidi(){
+        mProgress.setMessage("Downloading MIDI ...");
+        mProgress.show();
+
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference storageRef = storage.getReferenceFromUrl("gs://firelearn-122c1.appspot.com");
+        StorageReference  midiRef = storageRef.child("major-scale.mid");
+
+        File rootPath = new File(Environment.getExternalStorageDirectory(), "major-scale.mid");
+        if(!rootPath.exists()) {
+            rootPath.mkdirs();
+        }
+
+
+        final File localFile = new File(rootPath,"major-scale.mid");
+
+        midiRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                Log.e("firebase ",";local tem file created  created " +localFile.toString());
+                //  updateDb(timestamp,localFile.toString(),position);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                Log.e("firebase ",";local tem file not created  created " +exception.toString());
+            }
+        });
+
+
+
+        // Create a reference to a file from a Google Cloud Storage URI
+//        StorageReference gsReference = storageRef.child("gs://firelearn-122c1.appspot.com/major-scale.mid");
+
+
+
+
     }
 
 }
